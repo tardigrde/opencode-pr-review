@@ -58,10 +58,12 @@ jobs:
           model: opencode-go/deepseek-v4.1-flash
           opencode-api-key: ${{ secrets.OPENCODE_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          prompt-file: .github/opencode-review-prompt.md
           max-findings: 20
           severity-threshold: medium
 ```
+
+The built-in prompt works without extra files. Add `prompt` or `prompt-file`
+only when you want custom focus. A missing `prompt-file` fails the job.
 
 `@v1` is a convenience tag. Pin the action to a full release SHA for production
 and supply-chain safety. Find the SHA on the release page:

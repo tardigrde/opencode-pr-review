@@ -33,6 +33,7 @@ jobs:
           model: opencode-go/deepseek-v4.1-flash
           opencode-api-key: ${{ secrets.OPENCODE_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Create this file in the base branch, or remove this line to use the built-in prompt.
           prompt-file: .github/opencode-review-prompt.md
           max-findings: 20
           severity-threshold: medium
