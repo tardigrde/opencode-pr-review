@@ -113,13 +113,13 @@ export async function main() {
     );
   }
 
-  const inputs = readInputs();
-  registerSecret(inputs.apiKey);
-  registerSecret(inputs.githubToken);
-
   const event = readEvent();
   const skipReason = eventSkipReason(event, process.env);
   if (skipReason) return skip(skipReason);
+
+  const inputs = readInputs();
+  registerSecret(inputs.apiKey);
+  registerSecret(inputs.githubToken);
 
   const pr = event.pull_request;
   const workspace = process.env.GITHUB_WORKSPACE ?? process.cwd();
