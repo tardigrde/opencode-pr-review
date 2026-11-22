@@ -135,7 +135,8 @@ default 300 KB diff limit is about 150K tokens. The action reviews only
 `opened`, `ready_for_review`, and `reopened` events by default, not every push.
 
 The action downloads the `@opencode/cli` package (about 242 MB) on each job.
-Pin the version and cache it only if your runner supports a safe cache key.
+The installed tree is larger. Pin the version and cache it only if your runner
+supports a safe cache key.
 
 ## Custom prompt
 
@@ -175,7 +176,8 @@ spoofed marker does not count.
   plugins, `AGENTS.md`, `CLAUDE.md`, MCP, skills, and secret files removed.
 - Disables project config and Claude compatibility.
 - Uses a child environment allowlist; no GitHub token, no action runtime token.
-- Denies shell, edit, webfetch, websearch, subagent, and `execute`.
+- Denies grep, shell, edit, webfetch, websearch, subagent, and `execute`.
+  `grep` cannot be path-scoped, so the action removes it.
 - Validates findings against GitHub's own PR patch before posting.
 - Redacts secrets and refuses to post a rendered field that contains the key or
   token.

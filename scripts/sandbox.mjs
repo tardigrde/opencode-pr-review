@@ -27,7 +27,9 @@ export function isSensitivePath(relativePath) {
   const segments = normalized.split("/").filter(Boolean);
   if (
     segments.some((segment) =>
-      [".git", ".opencode", "node_modules", ".ssh", ".aws"].includes(segment),
+      [".git", ".github", ".opencode", "node_modules", ".ssh", ".aws"].includes(
+        segment,
+      ),
     )
   ) {
     return true;
@@ -126,7 +128,6 @@ export function buildOpenCodeConfig(options) {
     permissions.push({ action: "read", resource, effect: "allow" });
   }
   permissions.push({ action: "glob", resource: "*", effect: "allow" });
-  permissions.push({ action: "grep", resource: "*", effect: "allow" });
   for (const pattern of SECRET_READ_PATTERNS) {
     permissions.push({ action: "read", resource: pattern, effect: "deny" });
   }
@@ -136,6 +137,7 @@ export function buildOpenCodeConfig(options) {
     effect: "allow",
   });
   for (const action of [
+    "grep",
     "shell",
     "edit",
     "webfetch",

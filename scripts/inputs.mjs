@@ -77,7 +77,7 @@ function validatePromptFile(value) {
  */
 export function readInputs(env = process.env) {
   const model = optional(env, "INPUT_MODEL") ?? DEFAULTS.model;
-  if (!/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/.test(model)) {
+  if (!/^[^/\s]+\/[^\s]+$/.test(model)) {
     throw new InputError("model must use provider/model format");
   }
 

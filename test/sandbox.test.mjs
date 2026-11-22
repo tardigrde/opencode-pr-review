@@ -57,6 +57,7 @@ describe("sandbox", () => {
     assert.equal(isSensitivePath("src/auth.json"), true);
     assert.equal(isSensitivePath("src/a.js"), false);
     assert.equal(isSensitivePath(".opencode/plugins/evil.js"), true);
+    assert.equal(isSensitivePath(".github/workflows/ci.yml"), true);
     assert.equal(isSensitivePath("id_rsa"), true);
     assert.equal(isSensitivePath("AGENTS.md"), true);
   });
@@ -122,6 +123,14 @@ describe("sandbox", () => {
       config.permissions.some(
         (rule) =>
           rule.action === "shell" &&
+          rule.resource === "*" &&
+          rule.effect === "deny",
+      ),
+    );
+    assert.ok(
+      config.permissions.some(
+        (rule) =>
+          rule.action === "grep" &&
           rule.resource === "*" &&
           rule.effect === "deny",
       ),
