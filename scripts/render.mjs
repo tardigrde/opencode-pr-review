@@ -9,7 +9,7 @@ export function sanitizeInline(value) {
   // GitHub does not decode entities or backslash escapes inside code spans,
   // and mentions or links do not act there. Keep single-backtick spans as is.
   return String(value ?? "")
-    .split(/(`[^`\n]+`)/)
+    .split(/(?<![`\\])(`[^`\n]+`)(?!`)/)
     .map((part, index) => (index % 2 === 1 ? part : sanitizePlain(part)))
     .join("")
     .replace(/\n{3,}/g, "\n\n")
@@ -30,7 +30,8 @@ function sanitizePlain(value) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
   text = text.replace(/@/g, "@\u200b");
-  text = text.replace(/([*_[\]()#|~!])/g, "\\$1");
+  // Escape backticks and backslashes too, so a stray one cannot open a span.
+  text = text.replace(/([\\`*_[\]()#|~!])/g, "\\$1");
   return text;
 }
 
@@ -43,7 +44,14 @@ function cap(value, limit) {
   if (value.length <= limit) return value;
   const slice = value.slice(0, Math.max(0, limit - 1));
   const boundary = slice.lastIndexOf(" ");
-  return `${(boundary > limit * 0.6 ? slice.slice(0, boundary) : slice).trimEnd()}…`;
+  let cut = (
+    boundary > limit * 0.6 ? slice.slice(0, boundary) : slice
+  ).trimEnd();
+  // Plain text has its backticks escaped, so an odd count of unescaped
+  // backticks means the cut left a code span open. Drop that span.
+  const ticks = [...cut.matchAll(/(?<!\\)`/g)];
+  if (ticks.length % 2 === 1) cut = cut.slice(0, ticks.at(-1).index).trimEnd();
+  return `${cut}…`;
 }
 
 /**

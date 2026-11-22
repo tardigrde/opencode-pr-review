@@ -49,6 +49,30 @@ describe("renderComment", () => {
     );
     assert.equal(sanitizeInline("a_b & `x_y`"), "a\\_b &amp; `x_y`");
   });
+
+  test("does not trust escaped or repeated backticks", () => {
+    for (const input of [
+      "\\`<b>x</b>\\`",
+      "``<b>x</b>`",
+      "`[click](https://evil.example)``",
+    ]) {
+      const text = sanitizeInline(input);
+      assert.equal(text.includes("<b>"), false, input);
+      assert.equal(text.includes("](https"), false, input);
+    }
+  });
+
+  test("a cut never leaves a code span open", () => {
+    const body = renderComment({
+      severity: "low",
+      title: "t",
+      problem: `${"y".repeat(962)} \`<b>x</b> tail\``,
+      fix: "f",
+    });
+    const open = [...body.matchAll(/(?<!\\)`/g)].length;
+    assert.equal(open % 2, 0);
+    assert.equal(body.includes("<b>"), false);
+  });
 });
 
 describe("formatOmitted", () => {
