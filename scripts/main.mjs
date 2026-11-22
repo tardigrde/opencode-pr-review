@@ -19,6 +19,7 @@ import { runOpencode } from "./run-opencode.mjs";
 import { extractJson, validateFindings } from "./parse-findings.mjs";
 import { renderComment, renderSummary } from "./render.mjs";
 import { findExistingReview, postReview } from "./post-review.mjs";
+import { emptyUsage, formatUsageLine, renderUsageSummary } from "./usage.mjs";
 
 const ZERO_OMITTED = {
   invalidAnchor: 0,
@@ -40,10 +41,19 @@ export function setOutput(name, value) {
 }
 
 /**
+ * @param {import("./usage.mjs").Usage} usage
+ */
+function setUsageOutputs(usage) {
+  setOutput("input_tokens", usage.input);
+  setOutput("output_tokens", usage.output);
+}
+
+/**
  * @param {string} reason
  */
 function skip(reason) {
   console.log(`opencode-pr-review: skipped (${reason})`);
+  setUsageOutputs(emptyUsage());
   setOutput("findings", 0);
   setOutput("review_id", "");
   setOutput("posted", "false");
@@ -251,6 +261,8 @@ export async function main() {
 
   const sandbox = createSandbox({ workspace, model: inputs.model });
   let modelText;
+  let usage = emptyUsage();
+  const startedAt = Date.now();
   try {
     const bin =
       process.env.OPENCODE_BIN ??
@@ -260,7 +272,7 @@ export async function main() {
         "bin",
         "opencode",
       );
-    modelText = await runOpencode({
+    ({ text: modelText, usage } = await runOpencode({
       bin,
       model: inputs.model,
       prompt,
@@ -273,10 +285,16 @@ export async function main() {
       cache: sandbox.cache,
       configDir: sandbox.configDir,
       timeoutSeconds: inputs.timeoutSeconds,
-    });
+    }));
   } finally {
     cleanupSandbox(sandbox.root);
   }
+
+  const durationSeconds = Math.round((Date.now() - startedAt) / 1000);
+  console.log(formatUsageLine(usage, durationSeconds));
+  writeStepSummary(
+    renderUsageSummary({ model: inputs.model, usage, durationSeconds }),
+  );
 
   const raw = extractJson(modelText);
   const validation = validateFindings(raw, {
@@ -322,14 +340,24 @@ export async function main() {
     botLogin,
   });
 
-  return finish(result, validation.omitted);
+  return finish(result, validation.omitted, usage);
+}
+
+/**
+ * @param {string} markdown
+ */
+function writeStepSummary(markdown) {
+  const file = process.env.GITHUB_STEP_SUMMARY;
+  if (file) fs.appendFileSync(file, `${markdown}\n`);
 }
 
 /**
  * @param {any} result
  * @param {Record<string, number>} omitted
+ * @param {import("./usage.mjs").Usage} [usage]
  */
-function finish(result, omitted) {
+function finish(result, omitted, usage = emptyUsage()) {
+  setUsageOutputs(usage);
   const omittedTotal = Object.values(omitted).reduce(
     (sum, value) => sum + value,
     0,

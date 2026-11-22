@@ -111,13 +111,20 @@ with a small environment allowlist and disables project config and plugins.
 
 ## Outputs
 
-| Output      | Meaning                                                           |
-| ----------- | ----------------------------------------------------------------- |
-| `findings`  | Inline comments in the review, or the would-post count in dry-run |
-| `review-id` | Review id when posted; empty for dry-run and skip                 |
-| `posted`    | `true` when a review was posted                                   |
-| `skipped`   | `true` when the run was skipped                                   |
-| `omitted`   | Findings dropped or truncated by validation                       |
+| Output          | Meaning                                                           |
+| --------------- | ----------------------------------------------------------------- |
+| `findings`      | Inline comments in the review, or the would-post count in dry-run |
+| `review-id`     | Review id when posted; empty for dry-run and skip                 |
+| `posted`        | `true` when a review was posted                                   |
+| `skipped`       | `true` when the run was skipped                                   |
+| `omitted`       | Findings dropped or truncated by validation                       |
+| `input-tokens`  | Input tokens used by the model run; `0` when skipped              |
+| `output-tokens` | Output tokens used by the model run; `0` when skipped             |
+
+Each run that calls the model also logs one `usage:` line and adds a usage
+table (model, tokens, cost, duration) to the job summary. The `cost` value is
+what OpenCode reports. It is `0` for flat-rate plans such as OpenCode Go, so use
+the token counts to track usage.
 
 ## Fork PRs and trust
 

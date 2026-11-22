@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { redact } from "./redact.mjs";
+import { parseUsage } from "./usage.mjs";
 
 export class OpenCodeError extends Error {}
 
@@ -93,7 +94,7 @@ export function buildChildEnv(options) {
  *   configDir: string,
  *   timeoutSeconds: number,
  * }} options
- * @returns {Promise<string>}
+ * @returns {Promise<{text: string, usage: import("./usage.mjs").Usage}>}
  */
 export function runOpencode(options) {
   const env = buildChildEnv(options);
@@ -178,7 +179,10 @@ export function runOpencode(options) {
         return;
       }
       try {
-        finish(resolve, parseOpencodeEvents(stdout));
+        finish(resolve, {
+          text: parseOpencodeEvents(stdout),
+          usage: parseUsage(stdout),
+        });
       } catch (error) {
         finish(reject, error);
       }
