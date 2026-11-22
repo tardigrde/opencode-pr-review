@@ -119,13 +119,41 @@ with a small environment allowlist and disables project config and plugins.
 | `skipped`   | `true` when the run was skipped                                   |
 | `omitted`   | Findings dropped or truncated by validation                       |
 
-## Fork PRs and trust
+## Trust model
 
-Fork PRs are skipped. Fork payloads are empty and receive no secrets.
+The action is safe for repositories where everyone with write access is trusted.
 
-Same-repo PRs run with the repository's secrets. A same-repo writer is inside
-the trust boundary. Protect `.github/workflows/**` and the review prompt with
-CODEOWNERS and required code-owner review.
+**Who can run it with secrets.** Only people who can push a branch to the
+repository. A PR from a fork gets no secrets and a read-only token, and the
+action skips it.
+
+**What a writer can do.** A same-repo PR runs the workflow file from the PR
+branch. A writer can edit that file to read `OPENCODE_API_KEY` or to use the
+`GITHUB_TOKEN`. This is how GitHub Actions works for every workflow. It is not
+specific to this action. CODEOWNERS and branch protection control what is merged
+into the default branch. They do not stop a PR branch from running its own
+workflow.
+
+**What the action does to limit risk.**
+
+- The action code is pinned by tag or SHA. A PR cannot change it.
+- `prompt-file` is read from the base commit. A PR cannot rewrite its own review
+  instructions.
+- The model runs in a sandbox with no shell, edit, or network tools. It can read
+  only tracked files that are not secrets. Text in a diff cannot make it run
+  commands.
+- The API key is passed only to the OpenCode process. The model cannot read it.
+
+**What you should do.**
+
+1. Use a dedicated OpenCode API key with a spend limit. Rotate it if you suspect
+   a leak.
+2. Keep write access limited to people you trust.
+3. For stricter control, store the key in a GitHub Environment with required
+   reviewers and set `environment:` on the job. Each run then needs approval.
+
+The action does not support `pull_request_target`. Do not use it with this
+action.
 
 The review is advisory. Do not approve or merge based on it.
 
@@ -133,8 +161,10 @@ The review is advisory. Do not approve or merge based on it.
 
 The default model is `opencode-go/deepseek-v4.1-flash`. It uses an OpenCode Go
 subscription or Console balance. The model has a 1,000,000-token context; the
-default 300 KB diff limit is about 150K tokens. The action reviews only
-`opened`, `ready_for_review`, and `reopened` events by default, not every push.
+default 300 KB diff limit is about 150K tokens. The example workflow reviews
+`opened`, `synchronize`, `ready_for_review`, and `reopened` events. The action
+skips a head that already has a review. Remove `synchronize` to review each PR
+only once.
 
 The action downloads the `@opencode/cli` package (about 242 MB) on each job.
 The installed tree is larger. Pin the version and cache it only if your runner
