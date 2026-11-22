@@ -41,6 +41,14 @@ describe("renderComment", () => {
     assert.equal(text.includes("<b>"), false);
     assert.equal(text.includes("@team"), false);
   });
+
+  test("keeps code spans readable", () => {
+    assert.equal(
+      sanitizeInline("Use `a && b` and `my_var` not `@scope/pkg`."),
+      "Use `a && b` and `my_var` not `@scope/pkg`.",
+    );
+    assert.equal(sanitizeInline("a_b & `x_y`"), "a\\_b &amp; `x_y`");
+  });
 });
 
 describe("formatOmitted", () => {

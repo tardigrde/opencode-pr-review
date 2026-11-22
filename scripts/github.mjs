@@ -178,6 +178,8 @@ export class GitHubClient {
         method: "POST",
         body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
+        // A retry after a lost response could post a duplicate review.
+        retry: 0,
       },
     );
     return data;

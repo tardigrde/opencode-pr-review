@@ -26,7 +26,7 @@ summary.
 name: OpenCode review
 on:
   pull_request:
-    types: [opened, ready_for_review, reopened]
+    types: [opened, synchronize, ready_for_review, reopened]
 
 permissions:
   contents: read
@@ -103,7 +103,7 @@ with a small environment allowlist and disables project config and plugins.
 | `prompt-file`        | empty                             | Repo-relative path read from the base commit       |
 | `max-findings`       | `20`                              | Integer `1..100`                                   |
 | `severity-threshold` | `medium`                          | `high`, `medium`, or `low`                         |
-| `max-diff-bytes`     | `300000`                          | Maximum UTF-8 diff size                            |
+| `max-diff-bytes`     | `300000`                          | Maximum UTF-8 diff size. A larger diff is skipped  |
 | `timeout-seconds`    | `1500`                            | OpenCode child timeout                             |
 | `dry-run`            | `false`                           | Print the payload and do not post                  |
 | `force`              | `false`                           | Post even when a review marker exists at this head |

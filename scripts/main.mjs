@@ -8,6 +8,7 @@ import { registerSecret, redact, redactError } from "./redact.mjs";
 import {
   checkGitCredentials,
   collectDiff,
+  DiffTooLargeError,
   parseGitHubFiles,
   readBaseFile,
   validateRepo,
@@ -133,12 +134,18 @@ export async function main() {
   validateRepo({ workspace, baseSha, headSha });
   checkGitCredentials(workspace);
 
-  let local = await collectDiff({
-    workspace,
-    baseSha,
-    headSha,
-    maxBytes: inputs.maxDiffBytes,
-  });
+  let local;
+  try {
+    local = await collectDiff({
+      workspace,
+      baseSha,
+      headSha,
+      maxBytes: inputs.maxDiffBytes,
+    });
+  } catch (error) {
+    if (error instanceof DiffTooLargeError) return skip(error.message);
+    throw error;
+  }
 
   const client = new GitHubClient({
     token: inputs.githubToken,

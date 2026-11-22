@@ -6,7 +6,22 @@ export const SEVERITY_LABEL = { high: "High", medium: "Medium", low: "Low" };
  * @returns {string}
  */
 export function sanitizeInline(value) {
-  let text = String(value ?? "");
+  // GitHub does not decode entities or backslash escapes inside code spans,
+  // and mentions or links do not act there. Keep single-backtick spans as is.
+  return String(value ?? "")
+    .split(/(`[^`\n]+`)/)
+    .map((part, index) => (index % 2 === 1 ? part : sanitizePlain(part)))
+    .join("")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * @param {string} value
+ * @returns {string}
+ */
+function sanitizePlain(value) {
+  let text = value;
   text = text.replace(/!\[[^\]]*\]\([^)]*\)/g, "");
   text = text.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
   text = text.replace(/<[^>]*>/g, "");
@@ -16,7 +31,6 @@ export function sanitizeInline(value) {
     .replace(/>/g, "&gt;");
   text = text.replace(/@/g, "@\u200b");
   text = text.replace(/([*_[\]()#|~!])/g, "\\$1");
-  text = text.replace(/\n{3,}/g, "\n\n").trim();
   return text;
 }
 
