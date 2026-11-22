@@ -8,6 +8,7 @@ import { registerSecret, redact, redactError } from "./redact.mjs";
 import {
   checkGitCredentials,
   collectDiff,
+  DiffTooLargeError,
   parseGitHubFiles,
   readBaseFile,
   validateRepo,
@@ -133,12 +134,18 @@ export async function main() {
   validateRepo({ workspace, baseSha, headSha });
   checkGitCredentials(workspace);
 
-  let local = await collectDiff({
-    workspace,
-    baseSha,
-    headSha,
-    maxBytes: inputs.maxDiffBytes,
-  });
+  let local;
+  try {
+    local = await collectDiff({
+      workspace,
+      baseSha,
+      headSha,
+      maxBytes: inputs.maxDiffBytes,
+    });
+  } catch (error) {
+    if (error instanceof DiffTooLargeError) return skip(error.message);
+    throw error;
+  }
 
   const client = new GitHubClient({
     token: inputs.githubToken,
@@ -173,14 +180,20 @@ export async function main() {
     })
     .map(([pathName]) => pathName);
   if (hiddenPaths.length > 0) {
-    const textDiff = await collectDiff({
-      workspace,
-      baseSha,
-      headSha,
-      maxBytes: inputs.maxDiffBytes,
-      text: true,
-      paths: hiddenPaths,
-    });
+    let textDiff;
+    try {
+      textDiff = await collectDiff({
+        workspace,
+        baseSha,
+        headSha,
+        maxBytes: inputs.maxDiffBytes,
+        text: true,
+        paths: hiddenPaths,
+      });
+    } catch (error) {
+      if (error instanceof DiffTooLargeError) return skip(error.message);
+      throw error;
+    }
     const merged = new Map(local.map);
     for (const [pathName, lines] of textDiff.map) {
       const existing = merged.get(pathName) ?? new Set();
