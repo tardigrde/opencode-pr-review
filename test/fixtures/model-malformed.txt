@@ -1,0 +1,2 @@
+The model returned prose instead of a review object.
+{"findings": [ this is not valid JSON }

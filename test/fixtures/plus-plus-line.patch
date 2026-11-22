@@ -1,0 +1,6 @@
+diff --git a/plus.c b/plus.c
+index 1234567..89abcde 100644
+--- a/plus.c
++++ b/plus.c
+@@ -1,0 +2 @@
++++counter;

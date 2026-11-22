@@ -1,0 +1,13 @@
+{
+  "findings": [
+    {
+      "path": "src/pagination.ts",
+      "line": 42,
+      "start_line": 40,
+      "severity": "high",
+      "title": "Pagination drops the last item",
+      "problem": "When page is the last page, page + 1 returns an empty list, so the final item never appears.",
+      "fix": "Clamp the index to items.length - 1."
+    }
+  ]
+}

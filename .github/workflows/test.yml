@@ -1,0 +1,64 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install
+        run: npm ci --ignore-scripts
+
+      - name: Unit and smoke tests
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Syntax check
+        run: |
+          set -euo pipefail
+          for file in scripts/*.mjs; do
+            node --check "$file"
+          done
+
+      - name: Check pinned actions
+        run: |
+          set -euo pipefail
+          if grep -RInE 'uses:[[:space:]]+[^#]+@(v[0-9]|main|master|latest|<)' .github/workflows; then
+            echo "Pin every action to a full SHA" >&2
+            exit 1
+          fi
+
+      - name: Check SPEC.md is not tracked
+        run: |
+          if git ls-files --error-unmatch SPEC.md >/dev/null 2>&1; then
+            echo "SPEC.md must not be committed" >&2
+            exit 1
+          fi
+
+      - name: Install actionlint
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/actionlint.tar.gz \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
+          echo "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  /tmp/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
+          /tmp/actionlint

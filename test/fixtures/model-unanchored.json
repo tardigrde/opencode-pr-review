@@ -1,0 +1,12 @@
+{
+  "findings": [
+    {
+      "path": "src/pagination.ts",
+      "line": 999,
+      "severity": "medium",
+      "title": "Not in the diff",
+      "problem": "This line is not an added line.",
+      "fix": "Move the finding to a changed line."
+    }
+  ]
+}

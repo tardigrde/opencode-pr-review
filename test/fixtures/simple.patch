@@ -1,0 +1,6 @@
+diff --git a/src/a.txt b/src/a.txt
+index 7898192..422c2b7 100644
+--- a/src/a.txt
++++ b/src/a.txt
+@@ -1,0 +2 @@
++b

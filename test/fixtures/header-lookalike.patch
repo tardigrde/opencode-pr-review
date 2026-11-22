@@ -1,0 +1,6 @@
+diff --git a/f.txt b/f.txt
+index 7898192..422c2b7 100644
+--- a/f.txt
++++ b/f.txt
+@@ -1,0 +2 @@
++++ b/evil.txt

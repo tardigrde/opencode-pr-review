@@ -1,0 +1,115 @@
+name: OpenCode PR Review
+description: Review a pull request with OpenCode Go and post inline comments
+author: tardigrde
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  model:
+    description: OpenCode model in provider/model format
+    required: false
+    default: opencode-go/deepseek-v4.1-flash
+  opencode-api-key:
+    description: OpenCode Go or Console API key
+    required: true
+  github-token:
+    description: GitHub token used only by the posting script
+    required: false
+    default: ""
+  prompt:
+    description: Inline review instructions. Cannot be combined with prompt-file
+    required: false
+    default: ""
+  prompt-file:
+    description: Repo-relative prompt path read from the base commit
+    required: false
+    default: ""
+  max-findings:
+    description: Maximum inline comments
+    required: false
+    default: "20"
+  severity-threshold:
+    description: Minimum severity to post (high, medium, low)
+    required: false
+    default: medium
+  max-diff-bytes:
+    description: Maximum diff size in UTF-8 bytes
+    required: false
+    default: "300000"
+  timeout-seconds:
+    description: OpenCode child timeout in seconds
+    required: false
+    default: "1500"
+  dry-run:
+    description: Print the payload and do not post
+    required: false
+    default: "false"
+  force:
+    description: Post even when a review marker exists at this head
+    required: false
+    default: "false"
+  opencode-version:
+    description: Exact OpenCode CLI version
+    required: false
+    default: "2.3.2"
+
+outputs:
+  findings:
+    description: Number of inline comments in the review, or would-post count in dry-run
+    value: ${{ steps.review.outputs.findings }}
+  review-id:
+    description: GitHub review id when a review was posted
+    value: ${{ steps.review.outputs.review_id }}
+  posted:
+    description: Whether a review was posted
+    value: ${{ steps.review.outputs.posted }}
+  skipped:
+    description: Whether the run was skipped
+    value: ${{ steps.review.outputs.skipped }}
+  omitted:
+    description: Number of findings dropped or truncated by validation
+    value: ${{ steps.review.outputs.omitted }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install OpenCode
+      id: install
+      shell: bash
+      env:
+        OPENCODE_VERSION: ${{ inputs.opencode-version }}
+      run: |
+        set -euo pipefail
+        if ! [[ "$OPENCODE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "opencode-version must be an exact X.Y.Z version" >&2
+          exit 1
+        fi
+        npm install --global --prefix "$RUNNER_TEMP/opencode-cli" "@opencode/cli@$OPENCODE_VERSION"
+        actual="$("$RUNNER_TEMP/opencode-cli/bin/opencode" --version)"
+        case "$actual" in
+          *"v${OPENCODE_VERSION}"*) ;;
+          *)
+            echo "OpenCode version mismatch: expected $OPENCODE_VERSION, got $actual" >&2
+            exit 1
+            ;;
+        esac
+
+    - name: Review pull request
+      id: review
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_OPENCODE_API_KEY: ${{ inputs.opencode-api-key }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+        INPUT_PROMPT: ${{ inputs.prompt }}
+        INPUT_PROMPT_FILE: ${{ inputs.prompt-file }}
+        INPUT_MAX_FINDINGS: ${{ inputs.max-findings }}
+        INPUT_SEVERITY_THRESHOLD: ${{ inputs.severity-threshold }}
+        INPUT_MAX_DIFF_BYTES: ${{ inputs.max-diff-bytes }}
+        INPUT_TIMEOUT_SECONDS: ${{ inputs.timeout-seconds }}
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        INPUT_FORCE: ${{ inputs.force }}
+        INPUT_OPENCODE_VERSION: ${{ inputs.opencode-version }}
+      run: node "$GITHUB_ACTION_PATH/scripts/main.mjs"

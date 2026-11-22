@@ -1,0 +1,4 @@
+{"type":"step_start","part":{"type":"step-start"}}
+{"type":"text","part":{"type":"text","text":"{\"findings\":["}}
+{"type":"text","part":{"type":"text","text":"]}"}}
+{"type":"step_finish","part":{"type":"step-finish","reason":"stop"}}
