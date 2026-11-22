@@ -114,8 +114,9 @@ process.stdin.on("end", () => {
   process.stdout.write(JSON.stringify({type:"step_finish",part:{reason:"stop"}}) + "\\n");
 });
 `);
-    const text = await runOpencode(options(bin));
+    const { text, usage } = await runOpencode(options(bin));
     assert.equal(text, '{"findings":[]}');
+    assert.equal(usage.steps, 1);
   });
 
   test("fails on a non-zero exit", async () => {

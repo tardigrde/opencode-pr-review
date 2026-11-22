@@ -70,6 +70,12 @@ outputs:
   omitted:
     description: Number of findings dropped or truncated by validation
     value: ${{ steps.review.outputs.omitted }}
+  input-tokens:
+    description: Input tokens used by the model run, or 0 when the run was skipped
+    value: ${{ steps.review.outputs.input_tokens }}
+  output-tokens:
+    description: Output tokens used by the model run, or 0 when the run was skipped
+    value: ${{ steps.review.outputs.output_tokens }}
 
 runs:
   using: composite
