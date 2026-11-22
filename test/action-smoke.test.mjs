@@ -64,6 +64,37 @@ function makeRepo() {
   return { dir, baseSha, headSha };
 }
 
+test("fork payload skips before reading the API key", async () => {
+  const eventPath = path.join(
+    tempDir("opencode-pr-review-event-"),
+    "fork.json",
+  );
+  fs.writeFileSync(
+    eventPath,
+    JSON.stringify({
+      pull_request: {
+        number: 2,
+        draft: false,
+        user: { type: "User" },
+        head: { sha: "a".repeat(40), repo: { full_name: "fork/repo" } },
+        base: { sha: "b".repeat(40) },
+      },
+    }),
+  );
+  const outputPath = path.join(tempDir("opencode-pr-review-output-"), "output");
+  fs.writeFileSync(outputPath, "");
+  delete process.env.INPUT_OPENCODE_API_KEY;
+  Object.assign(process.env, {
+    GITHUB_EVENT_NAME: "pull_request",
+    GITHUB_REPOSITORY: "owner/repo",
+    GITHUB_EVENT_PATH: eventPath,
+    GITHUB_OUTPUT: outputPath,
+  });
+  const code = await main();
+  assert.equal(code, 0);
+  assert.match(fs.readFileSync(outputPath, "utf8"), /skipped=true/);
+});
+
 test("action smoke test posts one inline finding", async () => {
   const { dir, baseSha, headSha } = makeRepo();
   const eventPath = path.join(
