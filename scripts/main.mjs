@@ -17,7 +17,7 @@ import { buildPrompt } from "./build-prompt.mjs";
 import { runOpencode } from "./run-opencode.mjs";
 import { extractJson, validateFindings } from "./parse-findings.mjs";
 import { renderComment, renderSummary } from "./render.mjs";
-import { postReview } from "./post-review.mjs";
+import { findExistingReview, postReview } from "./post-review.mjs";
 
 const ZERO_OMITTED = {
   invalidAnchor: 0,
@@ -156,6 +156,15 @@ export async function main() {
   const files = await client.getPullFiles(pullNumber);
   const github = parseGitHubFiles(files);
 
+  const botLogin = await client.getBotLogin();
+  const reviews = await client.getReviews(pullNumber);
+  if (
+    !inputs.force &&
+    findExistingReview(reviews, botLogin, headSha, baseSha)
+  ) {
+    return skip("review marker already exists at this head");
+  }
+
   const hiddenPaths = [...github.map]
     .filter(([pathName, lines]) => {
       if (lines.size === 0) return false;
@@ -194,7 +203,6 @@ export async function main() {
       baseSha,
       noAddedLines: true,
     });
-    const botLogin = await client.getBotLogin();
     const result = await postReview({
       client,
       pullNumber,
@@ -289,7 +297,6 @@ export async function main() {
     }
   }
 
-  const botLogin = await client.getBotLogin();
   const result = await postReview({
     client,
     pullNumber,
